@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>AMANAT MED</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Подключаем Telegram Web App SDK -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+:root {
+  --bg:#f0f4f8; --white:#fff;
+  --accent:#00897b; --accent2:#00695c; --teal:#14b8a6;
+  --sidebar:#1a2238;
+  --border:#e2e8f0; --border2:#d0d9e8;
+  --text:#1a202c; --text2:#4a5568; --text3:#8898aa;
+  --green:#22c55e; --amber:#f59e0b; --red:#ef4444;
+  --purple:#8b5cf6; --pink:#ec4899; --orange:#f97316;
+  --r:12px; --r2:8px; --r3:6px;
+  --nav-h:64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;font-size:14px}
+button,input,select,textarea{font-family:'Inter',sans-serif}
+::-webkit-scrollbar{display:none}
+
+/* ── LAYOUT ── */
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+#app-main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 8px)}
+
+/* ── TOP BAR ── */
+.topbar{
+  background:var(--sidebar);
+  padding:12px 16px 10px;
+  padding-top:calc(12px + env(safe-area-inset-top,0px));
+  display:flex;align-items:center;gap:10px;
+  flex-shrink:0;
+  position:relative;z-index:20;
+}
+.topbar-logo{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.topbar-logo-icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--teal));display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:800;color:#fff;letter-spacing:.3px}
+.topbar-sub{font-size:10px;color:rgba(255,255,255,.45);margin-top:1px}
+.topbar-date-pill{
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+  border-radius:20px;padding:5px 11px;
+  font-size:11px;font-weight:600;color:#fff;white-space:nowrap;
+  display:flex;align-items:center;gap:5px;cursor:pointer;
+}
+.topbar-avatar{
+  width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:#fff;flex-shrink:0;cursor:pointer;
+  border:2px solid rgba(255,255,255,.25);
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--white);
+  border-top:1px solid var(--border);
+  display:flex;align-items:stretch;
+  height:calc(var(--nav-h) + var(--safe-bottom));
+  padding-bottom:var(--safe-bottom);
+  z-index:100;
+  box-shadow:0 -4px 20px rgba(0,0,0,.08);
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;cursor:pointer;padding:8px 4px 4px;
+  position:relative;transition:background .12s;
+  -webkit-tap-highlight-color:rgba(0,137,123,.08);
+}
+.nav-item.active{background:rgba(0,137,123,.05)}
+.nav-item svg{width:22px;height:22px;stroke:var(--text3);transition:stroke .12s}
+.nav-item.active svg{stroke:var(--accent)}
+.nav-item span{font-size:10px;font-weight:600;color:var(--text3);transition:color .12s}
+.nav-item.active span{color:var(--accent)}
+.nav-item .nav-dot{
+  position:absolute;top:6px;right:calc(50% - 14px);
+  width:7px;height:7px;border-radius:50%;background:var(--red);
+  border:1.5px solid var(--white);display:none;
+}
+
+/* ── PAGE CONTAINER ── */
+.page{display:none;padding:0}
+.page.active{display:block}
+
+/* ── DATE NAV ── */
+.date-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px 8px;background:var(--white);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:10;
+}
+.date-nav-btn{
+  width:36px;height:36px;border-radius:10px;
+  background:var(--bg);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;cursor:pointer;color:var(--text2);
+}
+.date-nav-center{text-align:center;cursor:pointer}
+.date-nav-label{font-size:15px;font-weight:700}
+.date-nav-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.today-btn{
+  font-size:11px;font-weight:700;color:var(--accent);
+  background:rgba(0,137,123,.1);border:none;
+  padding:4px 10px;border-radius:20px;cursor:pointer;
+}
+
+/* ── STAFF TABS ── */
+.staff-tabs{
+  display:flex;gap:8px;padding:10px 16px;
+  overflow-x:auto;background:var(--white);
+  border-bottom:1px solid var(--border);
+  -webkit-overflow-scrolling:touch;
+}
+.staff-tab{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  min-width:58px;cursor:pointer;flex-shrink:0;padding:4px 6px;
+  border-radius:10px;transition:background .12s;
+}
+.staff-tab.active{background:rgba(0,137,123,.08)}
+.staff-tab-av{
+  width:40px;height:40px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:#fff;
+  border:2.5px solid transparent;transition:border-color .12s;
+  position:relative;
+}
+.staff-tab.active .staff-tab-av{border-color:var(--accent)}
+.staff-tab-name{font-size:9.5px;font-weight:600;color:var(--text2);text-align:center;line-height:1.2;width:56px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.staff-tab-cnt{
+  position:absolute;top:-2px;right:-2px;
+  min-width:16px;height:16px;border-radius:8px;
+  background:var(--accent);color:#fff;
+  font-size:9px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;padding:0 3px;
+  border:1.5px solid var(--white);
+}
+
+/* ── TIMELINE ── */
+.timeline-wrap{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.appt-card{
+  background:var(--white);border-radius:14px;
+  overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08);
+  border-left:4px solid var(--accent);
+  display:flex;cursor:pointer;
+  transition:transform .12s, box-shadow .12s;
+  -webkit-tap-highlight-color:rgba(0,0,0,.04);
+}
+.appt-card:active{transform:scale(.98)}
+.appt-time-col{
+  width:54px;flex-shrink:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:12px 0;
+  background:rgba(0,0,0,.02);border-right:1px solid var(--border);
+}
+.appt-time{font-size:13px;font-weight:700;color:var(--text)}
+.appt-dur{font-size:10px;color:var(--text3);margin-top:2px}
+.appt-body{flex:1;padding:10px 12px;min-width:0}
+.appt-patient覆{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.appt-patient{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.appt-service{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.appt-meta{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap}
+.appt-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px}
+.appt-wa{
+  width:30px;height:30px;background:#25d366;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin:auto 10px auto 0;
+}
+.empty-day{
+  text-align:center;padding:48px 24px;
+  color:var(--text3);
+}
+.empty-day-icon{font-size:40px;margin-bottom:12px}
+.empty-day-title{font-size:15px;font-weight:700;color:var(--text2);margin-bottom:6px}
+.empty-day-sub{font-size:13px;line-height:1.5}
+
+/* ── FAB ── */
+.fab{
+  position:fixed;right:18px;bottom:calc(var(--nav-h) + var(--safe-bottom) + 14px);
+  width:52px;height:52px;border-radius:16px;
+  background:linear-gradient(135deg,var(--accent),var(--teal));
+  border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 20px rgba(0,137,123,.4);
+  z-index:90;transition:transform .12s, box-shadow .12s;
+}
+.fab:active{transform:scale(.93);box-shadow:0 3px 12px rgba(0,137,123,.35)}
+.fab svg{width:24px;height:24px;stroke:#fff;stroke-width:2.5}
+
+/* ── PATIENTS LIST ── */
+.search-bar{padding:12px 16px;background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.search-input{
+  width:100%;padding:10px 14px 10px 38px;
+  background:var(--bg);border:1.5px solid var(--border);
+  border-radius:10px;font-size:14px;outline:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238898aa' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:12px center;
+}
+.patient-card{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 16px;background:var(--white);
+  border-bottom:1px solid var(--border2);cursor:pointer;
+}
+.patient-card:active{background:var(--bg)}
+.patient-av{
+  width:42px;height:42px;border-radius:50%;
+  background:var(--accent);display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.patient-name{font-size:14px;font-weight:700;margin-bottom:2px}
+.patient-meta{font-size:12px;color:var(--text3)}
+.patient-arrow{margin-left:auto;color:var(--border2);font-size:18px}
+
+/* ── OVERVIEW CARDS ── */
+.overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px}
+.ov-card{background:var(--white);border-radius:14px;padding:16px;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.ov-card-wide{grid-column:1/-1}
+.ov-card-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:18px}
+.ov-card-val{font-size:24px;font-weight:800;color:var(--text)}
+.ov-card-label{font-size:11px;color:var(--text3);margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.ov-card-sub{font-size:11px;color:var(--green);font-weight:600;margin-top:2px}
+
+/* ── PROFILE PAGE ── */
+.profile-header{
+  background:var(--sidebar);
+  padding:24px 20px 20px;
+  padding-top:calc(24px + env(safe-area-inset-top,0px));
+}
+.profile-av-large{
+  width:72px;height:72px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;font-weight:700;color:#fff;margin:0 auto 12px;
+  border:3px solid rgba(255,255,255,.25);
+}
+.profile-name-large{font-size:18px;font-weight:800;color:#fff;text-align:center}
+.profile-role-large{font-size:12px;color:rgba(255,255,255,.5);text-align:center;margin-top:4px}
+.settings-section{padding:16px 16px 4px}
+.settings-section-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.settings-row{
+  display:flex;align-items:center;gap:12px;
+  background:var(--white);padding:14px 16px;
+  border-bottom:1px solid var(--border2);cursor:pointer;
+}
+.settings-row:first-of-type{border-radius:12px 12px 0 0}
+.settings-row:last-of-type{border-radius:0 0 12px 12px;border-bottom:none}
+.settings-row:only-child{border-radius:12px;border-bottom:none}
+.settings-row:active{background:var(--bg)}
+.settings-row-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.settings-row-label{flex:1;font-size:14px;font-weight:500}
+.settings-row-arrow{color:var(--border2);font-size:18px}
+.settings-row-val{font-size:13px;color:var(--text3);margin-right:6px}
+
+/* ── LOGIN ── */
+#login-screen{
+  position:fixed;inset:0;z-index:9999;
+  background:linear-gradient(160deg,#0f172a 0%,#1a2238 60%,#0f2027 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px 24px calc(24px + env(safe-area-inset-bottom,0px));
+  overflow-y:auto;
+}
+.login-logo-wrap{text-align:center;margin-bottom:32px}
+.login-logo-icon{
+  width:72px;height:72px;border-radius:20px;
+  background:linear-gradient(135deg,var(--accent),var(--teal));
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 14px;
+  box-shadow:0 8px 32px rgba(0,137,123,.4);
+}
+.login-title{font-size:22px;font-weight:800;color:#fff;letter-spacing:.3px}
+.login-sub{font-size:12px;color:rgba(255,255,255,.4);margin-top:4px}
+.login-card{width:100%;max-width:360px}
+.login-field{margin-bottom:14px}
+.login-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px}
+.login-input{
+  width:100%;padding:14px 16px;
+  background:rgba(255,255,255,.08);
+  border:1.5px solid rgba(255,255,255,.12);
+  border-radius:12px;font-size:16px;color:#fff;outline:none;
+  -webkit-appearance:none;
+  transition:border-color .15s;
+}
+.login-input::placeholder{color:rgba(255,255,255,.25)}
+.login-input:focus{border-color:var(--teal)}
+.login-btn{
+  width:100%;padding:15px;margin-top:6px;
+  background:linear-gradient(135deg,var(--accent),var(--teal));
+  border:none;border-radius:12px;
+  font-size:16px;font-weight:700;color:#fff;cursor:pointer;
+  box-shadow:0 4px 20px rgba(0,137,123,.4);
+  -webkit-appearance:none;
+}
+.login-error{
+  background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);
+  border-radius:10px;padding:10px 14px;
+  font-size:13px;color:#fca5a5;font-weight:600;
+  margin-bottom:14px;display:none;text-align:center;
+}
+.quick-logins{margin-top:24px}
+.quick-title{font-size:10px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em;text-align:center;margin-bottom:12px}
+.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.quick-btn{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 12px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  border-radius:10px;cursor:pointer;
+}
+.quick-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.quick-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── MODAL SHEET ── */
+.sheet-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  backdrop-filter:blur(2px);
+  opacity:0;transition:opacity .2s;pointer-events:none;
+}
+.sheet-overlay.open{opacity:1;pointer-events:auto}
+.sheet{
+  background:var(--white);border-radius:20px 20px 0 0;
+  padding:0 0 calc(20px + var(--safe-bottom));
+  max-height:90vh;overflow-y:auto;
+  transform:translateY(100%);transition:transform .25s cubic-bezier(.25,.46,.45,.94);
+}
+.sheet-overlay.open .sheet{transform:translateY(0)}
+.sheet-handle{width:36px;height:4px;background:#d0d8e8;border-radius:2px;margin:12px auto 16px}
+.sheet-title{font-size:17px;font-weight:800;padding:0 20px 14px;border-bottom:1px solid var(--border)}
+.sheet-body{padding:16px 20px}
+.sheet-field{margin-bottom:14px}
+.sheet-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px}
+.sheet-input{
+  width:100%;padding:12px 14px;
+  border:1.5px solid var(--border);border-radius:10px;
+  font-size:16px;outline:none;background:var(--bg);
+  -webkit-appearance:none;
+  transition:border-color .15s;
+}
+.sheet-input:focus{border-color:var(--accent)}
+.sheet-select{
+  width:100%;padding:12px 14px;
+  border:1.5px solid var(--border);border-radius:10px;
+  font-size:16px;outline:none;background:var(--bg);
+  -webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238898aa' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;
+}
+.sheet-btn{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,var(--accent),var(--teal));
+  color:#fff;border:none;border-radius:12px;
+  font-size:15px;font-weight:700;cursor:pointer;
+  box-shadow:0 3px 12px rgba(0,137,123,.3);
+}
+.sheet-btn-danger{background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 3px 12px rgba(239,68,68,.3)}
+.sheet-btn-secondary{background:var(--bg);color:var(--text2);border:1.5px solid var(--border);box-shadow:none}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;top:calc(env(safe-area-inset-top,0px) + 60px);left:50%;transform:translateX(-50%);z-index:999;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:6px}
+.toast{
+  background:rgba(26,34,56,.92);color:#fff;
+  padding:10px 18px;border-radius:20px;
+  font-size:13px;font-weight:600;
+  box-shadow:0 4px 20px rgba(0,0,0,.25);
+  backdrop-filter:blur(8px);
+  animation:toastIn .2s ease, toastOut .3s ease 2.2s forwards;
+  white-space:nowrap;
+}
+.toast.ok{background:rgba(0,137,123,.9)}
+.toast.err{background:rgba(239,68,68,.9)}
+@keyframes toastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-8px)}}
+
+/* ── APPT DETAIL SHEET ── */
+.detail-header{padding:16px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.detail-av{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0}
+.detail-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border2)}
+.detail-row:last-child{border-bottom:none}
+.detail-key{font-size:12px;color:var(--text3);font-weight:600}
+.detail-val{font-size:13px;font-weight:600;text-align:right;max-width:65%}
+.status-badge{padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700}
+
+/* ── CALENDAR PAGE ── */
+.cal-grid-header{display:grid;grid-template-columns:repeat(7,1fr);background:var(--white);border-bottom:1px solid var(--border);padding:4px 16px 8px}
+.cal-dh{font-size:10px;font-weight:700;color:var(--text3);text-align:center;text-transform:uppercase}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:0;padding:8px 16px 12px;background:var(--white)}
+.cal-day{
+  aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;border-radius:50%;
+  font-size:13px;font-weight:500;color:var(--text2);
+  position:relative;transition:background .1s;
+}
+.cal-day:active{background:var(--bg)}
+.cal-day.today{background:var(--accent);color:#fff;font-weight:700}
+.cal-day.selected{background:rgba(0,137,123,.15);color:var(--accent);font-weight:700}
+.cal-day.today.selected{background:var(--accent);color:#fff}
+.cal-day.other-month{opacity:.3}
+.cal-day .cal-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);position:absolute;bottom:3px}
+.cal-day.today .cal-dot{background:#fff}
+
+/* ── USERS ADMIN ── */
+.user-row{display:flex;align-items:center;gap:12px;padding:13px 16px;background:var(--white);border-bottom:1px solid var(--border2);cursor:pointer}
+.user-row:active{background:var(--bg)}
+.user-role-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px}
+
+/* ── CHANGE PASSWORD ── */
+.cp-btn{
+  width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;
+}
+
+</style>
+</head>
+<body>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<!-- ══ LOGIN ══ -->
+<div id="login-screen">
+  <div class="login-logo-wrap">
+    <div class="login-logo-icon">
+      <svg viewBox="0 0 60 60" width="36" height="36"><path fill="white" fill-rule="evenodd" d="M21 3 A25 25 0 1 1 21 47 A18 18 0 1 0 21 3 Z"/></svg>
+    </div>
+    <div class="login-title">AMANAT MED</div>
+    <div class="login-sub">CRM · Вход в систему</div>
+  </div>
+  <div class="login-card">
+    <div class="login-error" id="login-error">Неверный логин или пароль</div>
+    <div class="login-field">
+      <label class="login-label">Логин</label>
+      <input class="login-input" id="l-user" placeholder="Введите логин" autocomplete="username" autocapitalize="none" onkeydown="if(event.key==='Enter')document.getElementById('l-pass').focus()">
+    </div>
+    <div class="login-field">
+      <label class="login-label">Пароль</label>
+      <input class="login-input" id="l-pass" type="password" placeholder="Введите пароль" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Войти</button>
+    <div class="quick-logins">
+      <div class="quick-title">Быстрый вход (демо)</div>
+      <div class="quick-grid">
+        <div class="quick-btn" onclick="quickLogin('admin')"><span class="quick-dot" style="background:#00897b"></span><span class="quick-name">Администратор</span></div>
+        <div class="quick-btn" onclick="quickLogin('reception')"><span class="quick-dot" style="background:#14b8a6"></span><span class="quick-name">Рецепшен</span></div>
+        <div class="quick-btn" onclick="quickLogin('aigerim')"><span class="quick-dot" style="background:#4f9cf9"></span><span class="quick-name">Айгерим Н.</span></div>
+        <div class="quick-btn" onclick="quickLogin('serik')"><span class="quick-dot" style="background:#14b8a6"></span><span class="quick-name">Серик М.</span></div>
+        <div class="quick-btn" onclick="quickLogin('damira')"><span class="quick-dot" style="background:#a78bfa"></span><span class="quick-name">Дамира К.</span></div>
+        <div class="quick-btn" onclick="quickLogin('gauhar')"><span class="quick-dot" style="background:#ec4899"></span><span class="quick-name">Гаухар Т.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app" style="display:none">
+
+  <!-- TOP BAR -->
+  <div class="topbar" id="topbar">
+    <div class="topbar-logo">
+      <div class="topbar-logo-icon">
+        <svg viewBox="0 0 60 60" width="18" height="18"><path fill="white" fill-rule="evenodd" d="M21 3 A25 25 0 1 1 21 47 A18 18 0 1 0 21 3 Z"/></svg>
+      </div>
+      <div>
+        <div class="topbar-title" id="topbar-title">Расписание</div>
+      </div>
+    </div>
+    <div class="topbar-date-pill" id="topbar-date" onclick="openCalSheet()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span id="topbar-date-text">—</span>
+    </div>
+    <div class="topbar-avatar" id="topbar-avatar" onclick="setPage('profile')">АД</div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="app-main">
+
+    <!-- ── SCHEDULE PAGE ── -->
+    <div class="page active" id="page-schedule">
+      <div class="date-nav">
+        <div class="date-nav-btn" onclick="changeDay(-1)">‹</div>
+        <div class="date-nav-center" onclick="openCalSheet()">
+          <div class="date-nav-label" id="dn-label">—</div>
+          <div class="date-nav-sub" id="dn-sub">—</div>
+        </div>
+        <button class="today-btn" onclick="goToday()">Сегодня</button>
+        <div class="date-nav-btn" onclick="changeDay(1)">›</div>
+      </div>
+      <div class="staff-tabs" id="staff-tabs"></div>
+      <div class="timeline-wrap" id="timeline"></div>
+    </div>
+
+    <!-- ── PATIENTS PAGE ── -->
+    <div class="page" id="page-patients">
+      <div class="search-bar">
+        <input class="search-input" id="patient-search" placeholder="Поиск пациентов..." oninput="renderPatients()">
+      </div>
+      <div id="patients-list"></div>
+    </div>
+
+    <!-- ── OVERVIEW PAGE ── -->
+    <div class="page" id="page-overview">
+      <div class="overview-grid" id="overview-grid"></div>
+    </div>
+
+    <!-- ── CALENDAR PAGE ── -->
+    <div class="page" id="page-calendar">
+      <div style="background:var(--white);border-bottom:1px solid var(--border);padding:12px 16px 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <button onclick="calPrevMonth()" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px">‹</button>
+          <div style="font-size:15px;font-weight:700" id="cal-month-label">—</div>
+          <button onclick="calNextMonth()" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px">›</button>
+        </div>
+        <div class="cal-grid-header"><span class="cal-dh">Пн</span><span class="cal-dh">Вт</span><span class="cal-dh">Ср</span><span class="cal-dh">Чт</span><span class="cal-dh">Пт</span><span class="cal-dh">Сб</span><span class="cal-dh">Вс</span></div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div style="padding:0 16px">
+        <div style="font-size:13px;font-weight:700;color:var(--text2);margin:12px 0 8px" id="cal-day-label">Записи на день</div>
+        <div id="cal-day-list"></div>
+      </div>
+    </div>
+
+    <!-- ── PROFILE PAGE ── -->
+    <div class="page" id="page-profile">
+      <div class="profile-header" id="profile-header-block">
+        <div class="profile-av-large" id="prof-av">АД</div>
+        <div class="profile-name-large" id="prof-name">—</div>
+        <div class="profile-role-large" id="prof-role">—</div>
+      </div>
+      <div id="profile-body"></div>
+    </div>
+
+  </div><!-- /app-main -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active" id="nav-schedule" onclick="setPage('schedule')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Расписание</span>
+    </div>
+    <div class="nav-item" id="nav-calendar" onclick="setPage('calendar')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span>Календарь</span>
+    </div>
+    <div class="nav-item" id="nav-patients" onclick="setPage('patients')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Пациенты</span>
+    </div>
+    <div class="nav-item" id="nav-overview" onclick="setPage('overview')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>Обзор</span>
+    </div>
+    <div class="nav-item" id="nav-profile" onclick="setPage('profile')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Профиль</span>
+    </div>
+  </div>
+
+  <!-- FAB -->
+  <button class="fab" id="fab" onclick="openAddSheet()" title="Новая запись">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+
+</div><!-- /app -->
+
+<!-- ══ SHEETS ══ -->
+
+<!-- Appointment Detail -->
+<div class="sheet-overlay" id="detail-overlay" onclick="if(event.target===this)closeSheet('detail-overlay')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<!-- Add Appointment -->
+<div class="sheet-overlay" id="add-overlay" onclick="if(event.target===this)closeSheet('add-overlay')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">➕ Новая запись</div>
+    <div class="sheet-body">
+      <div class="sheet-field"><label class="sheet-label">Пациент</label><input class="sheet-input" id="a-patient" placeholder="ФИО пациента"></div>
+      <div class="sheet-field"><label class="sheet-label">Телефон</label><input class="sheet-input" id="a-phone" placeholder="+7 (700) 000-00-00" type="tel"></div>
+      <div class="sheet-field"><label class="sheet-label">Врач</label>
+        <select class="sheet-select" id="a-doctor"></select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="sheet-field"><label class="sheet-label">Время</label><input class="sheet-input" id="a-time" type="time" value="10:00"></div>
+        <div class="sheet-field"><label class="sheet-label">Длит. (мин)</label><input class="sheet-input" id="a-dur" type="number" value="60" min="15" step="15"></div>
+      </div>
+      <div class="sheet-field"><label class="sheet-label">Услуга</label>
+        <select class="sheet-select" id="a-service">
+          <option>Консультация первичная</option><option>Консультация повторная</option>
+          <option>MLS лазер</option><option>EMS стимуляция</option><option>Миостимуляция</option>
+          <option>Магнитотерапия</option><option>Ударно-волновая терапия</option>
+          <option>Иглотерапия</option><option>Ультразвуковая терапия</option>
+          <option>ЛФК</option><option>Остеопатия</option><option>Кинезиотерапия</option>
+          <option>PRP-аутотерапия</option><option>Блокада медикаментозная</option>
+          <option>Тракционный стол</option>
+        </select>
+      </div>
+      <div class="sheet-field"><label class="sheet-label">Статус</label>
+        <select class="sheet-select" id="a-status">
+          <option>Подтверждён</option><option>Ожидает</option><option>Срочно</option>
+        </select>
+      </div>
+      <button class="sheet-btn" onclick="submitAdd()" style="margin-top:6px">Сохранить</button>
+      <button class="sheet-btn sheet-btn-secondary" onclick="closeSheet('add-overlay')" style="margin-top:8px">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Calendar picker sheet -->
+<div class="sheet-overlay" id="cal-overlay" onclick="if(event.target===this)closeSheet('cal-overlay')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📅 Выбрать дату</div>
+    <div style="padding:0 16px 20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0 8px">
+        <button onclick="calPickerPrev()" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:18px">‹</button>
+        <div style="font-size:15px;font-weight:700" id="picker-month-label">—</div>
+        <button onclick="calPickerNext()" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:18px">›</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:0;margin-bottom:4px">
+        <span class="cal-dh">Пн</span><span class="cal-dh">Вт</span><span class="cal-dh">Ср</span><span class="cal-dh">Чт</span><span class="cal-dh">Пт</span><span class="cal-dh">Сб</span><span class="cal-dh">Вс</span>
+      </div>
+      <div id="picker-grid" class="cal-grid" style="padding:0;gap:2px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Change password sheet -->
+<div class="sheet-overlay" id="cp-overlay" onclick="if(event.target===this)closeSheet('cp-overlay')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">🔐 Изменить пароль</div>
+    <div class="sheet-body">
+      <div class="sheet-field"><label class="sheet-label">Текущий пароль</label><input class="sheet-input" id="cp-old" type="password" placeholder="••••••"></div>
+      <div class="sheet-field"><label class="sheet-label">Новый пароль</label><input class="sheet-input" id="cp-new" type="password" placeholder="Минимум 4 символа"></div>
+      <div class="sheet-field"><label class="sheet-label">Подтвердить</label><input class="sheet-input" id="cp-conf" type="password" placeholder="Повторите пароль"></div>
+      <button class="cp-btn" onclick="changePassword()">Сохранить пароль</button>
+      <button class="sheet-btn sheet-btn-secondary" onclick="closeSheet('cp-overlay')" style="margin-top:8px;width:100%;padding:13px;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;background:var(--bg)">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit user sheet (admin) -->
+<div class="sheet-overlay" id="user-overlay" onclick="if(event.target===this)closeSheet('user-overlay')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="user-sheet-title">👤 Пользователь</div>
+    <div class="sheet-body" id="user-sheet-body"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════
+// TELEGRAM WEB APP INTEGRATION
+// ═══════════════════════════════
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
+tg.setHeaderColor('#1a2238'); // Цвет верхней плашки под стиль CRM
+
+// Функция авто-входа по Telegram username
+function checkTelegramAuth() {
+  const tgUser = tg.initDataUnsafe?.user;
+  if (tgUser && tgUser.username) {
+    const tgUsername = tgUser.username.toLowerCase();
+    const user = loadUsers().find(u => u.login.toLowerCase() === tgUsername);
+    if (user) {
+      loginAs(user);
+      return true;
+    }
+  }
+  return false;
+}
+
+// ═══════════════════════════════
+// DATA
+// ═══════════════════════════════
+const STAFF = [
+  {id:1, name:'Айгерим Н.',  role:'Невролог',          color:'#4f9cf9', initials:'АН'},
+  {id:2, name:'Серик М.',    role:'Ортопед',           color:'#14b8a6', initials:'СМ'},
+  {id:3, name:'Дамира К.',   role:'Физиотерапевт',     color:'#a78bfa', initials:'ДК'},
+  {id:4, name:'Асель Б.',    role:'Физиотерапевт',     color:'#f97316', initials:'АБ'},
+  {id:5, name:'Нурлан Р.',   role:'Реабилитолог',      color:'#22c55e', initials:'НР'},
+  {id:6, name:'Гаухар Т.',   role:'Медсестра (проц.)', color:'#ec4899', initials:'ГТ'},
+];
+
+let APPOINTMENTS = [
+  {id:1,  staffId:1, patient:'Иванов Иван И.',    phone:'+7(701)123-4511', service:'MLS лазер',               date:'2026-06-02', timeStart:'08:00', dur:60,  status:'Подтверждён'},
+  {id:2,  staffId:1, patient:'Сергеева А. Р.',    phone:'+7(702)234-5622', service:'Консультация первичная',  date:'2026-06-02', timeStart:'09:30', dur:40,  status:'Подтверждён'},
+  {id:3,  staffId:1, patient:'Молдахмет Б.',      phone:'+7(703)345-6733', service:'PRP-аутотерапия',         date:'2026-06-02', timeStart:'11:00', dur:90,  status:'Срочно'},
+  {id:4,  staffId:2, patient:'Петров П. С.',      phone:'+7(704)456-7844', service:'PRP внутрисуставной',    date:'2026-06-02', timeStart:'09:00', dur:60,  status:'Подтверждён'},
+  {id:5,  staffId:2, patient:'Жумаева К. Т.',     phone:'+7(705)567-8955', service:'Блокада медикаментозная', date:'2026-06-02', timeStart:'10:30', dur:45,  status:'Подтверждён'},
+  {id:6,  staffId:2, patient:'Ахметов С. А.',     phone:'+7(706)678-9066', service:'Тракция Ормед',          date:'2026-06-02', timeStart:'13:00', dur:60,  status:'Ожидает'},
+  {id:7,  staffId:3, patient:'Нурова Г. Н.',      phone:'+7(707)789-0177', service:'Ударно-волновая терапия', date:'2026-06-02', timeStart:'08:30', dur:30,  status:'Подтверждён'},
+  {id:8,  staffId:3, patient:'Байменов Е. Б.',    phone:'+7(708)890-1288', service:'EMS стимуляция',          date:'2026-06-02', timeStart:'09:30', dur:30,  status:'Подтверждён'},
+  {id:9,  staffId:3, patient:'Карибаева А.',      phone:'+7(709)901-2399', service:'Миостимуляция',           date:'2026-06-02', timeStart:'10:30', dur:45,  status:'Срочно'},
+  {id:10, staffId:3, patient:'Тастанова М.',      phone:'+7(700)012-3400', service:'Магнитотерапия',          date:'2026-06-02', timeStart:'12:00', dur:30,  status:'Подтверждён'},
+  {id:11, staffId:4, patient:'Ким А. В.',         phone:'+7(701)111-2211', service:'Иглотерапия',             date:'2026-06-02', timeStart:'09:00', dur:45,  status:'Подтверждён'},
+  {id:12, staffId:4, patient:'Горбунов П. Р.',    phone:'+7(702)222-3322', service:'Тракционный стол',        date:'2026-06-02', timeStart:'10:30', dur:30,  status:'Ожидает'},
+  {id:13, staffId:4, patient:'Смирнова Е. Д.',    phone:'+7(703)333-4433', service:'Ультразвуковая терапия',  date:'2026-06-02', timeStart:'11:30', dur:30,  status:'Подтверждён'},
+  {id:14, staffId:5, patient:'Диас К. С.',        phone:'+7(704)444-5544', service:'ЛФК',                     date:'2026-06-02', timeStart:'09:00', dur:60,  status:'Подтверждён'},
+  {id:15, staffId:5, patient:'Мухамедов Н.',      phone:'+7(705)555-6655', service:'Остеопатия',              date:'2026-06-02', timeStart:'11:00', dur:60,  status:'Подтверждён'},
+  {id:16, staffId:5, patient:'Асанова Д. Б.',     phone:'+7(706)666-7766', service:'Кинезиотерапия',          date:'2026-06-02', timeStart:'14:00', dur:60,  status:'Ожидает'},
+  {id:17, staffId:6, patient:'Иванов Иван И.',    phone:'',                service:'MLS лазер',               date:'2026-06-02', timeStart:'09:30', dur:30,  status:'Направлен врачом'},
+  {id:18, staffId:6, patient:'Карибаева А.',      phone:'',                service:'EMS стимуляция',          date:'2026-06-02', timeStart:'10:45', dur:30,  status:'Направлен врачом'},
+  {id:21, staffId:1, patient:'Иванов Иван И.',    phone:'+7(701)123-4511', service:'MLS лазер',               date:'2026-06-03', timeStart:'09:00', dur:60,  status:'Подтверждён'},
+  {id:22, staffId:2, patient:'Сергеева А. Р.',    phone:'+7(702)234-5622', service:'EMS стимуляция',          date:'2026-06-03', timeStart:'10:00', dur:30,  status:'Подтверждён'},
+  {id:23, staffId:3, patient:'Молдахмет Б.',      phone:'+7(703)345-6733', service:'Магнитотерапия',          date:'2026-06-03', timeStart:'11:00', dur:30,  status:'Подтверждён'},
+  {id:24, staffId:1, patient:'Карибаева А.',      phone:'+7(709)901-2399', service:'Иглотерапия',             date:'2026-06-03', timeStart:'14:00', dur:45,  status:'Подтверждён'},
+  {id:31, staffId:1, patient:'Иванов Иван И.',    phone:'+7(701)123-4511', service:'MLS лазер',               date:'2026-06-04', timeStart:'08:30', dur:60,  status:'Подтверждён'},
+  {id:32, staffId:2, patient:'Тастанова М.',      phone:'+7(700)012-3400', service:'Блокада медикаментозная', date:'2026-06-04', timeStart:'10:00', dur:45,  status:'Подтверждён'},
+  {id:41, staffId:2, patient:'Молдахмет Б.',      phone:'+7(703)345-6733', service:'PRP-аутотерапия',         date:'2026-06-06', timeStart:'10:00', dur:90,  status:'Подтверждён'},
+  {id:42, staffId:1, patient:'Иванов Иван И.',    phone:'+7(701)123-4511', service:'MLS лазер',               date:'2026-06-06', timeStart:'09:00', dur:60,  status:'Подтверждён'},
+];
+let nextId = 50;
+
+// ═══════════════════════════════
+// AUTH
+// ═══════════════════════════════
+const DEFAULT_USERS = [
+  {id:'admin',     login:'admin',     password:'admin123',   displayName:'Администратор', role:'admin',     staffId:null, color:'#00897b', initials:'АД'},
+  {id:'reception', login:'reception', password:'rec123',     displayName:'Рецепшен',      role:'reception', staffId:null, color:'#14b8a6', initials:'РЦ'},
+  {id:'aigerim',   login:'aigerim',   password:'aigerim123', displayName:'Айгерим Н.',    role:'doctor',    staffId:1,    color:'#4f9cf9', initials:'АН'},
+  {id:'serik',     login:'serik',     password:'serik123',   displayName:'Серик М.',      role:'doctor',    staffId:2,    color:'#14b8a6', initials:'СМ'},
+  {id:'damira',    login:'damira',    password:'damira123',  displayName:'Дамира К.',     role:'doctor',    staffId:3,    color:'#a78bfa', initials:'ДК'},
+  {id:'asel',      login:'asel',      password:'asel123',    displayName:'Асель Б.',      role:'doctor',    staffId:4,    color:'#f97316', initials:'АБ'},
+  {id:'nurlan',    login:'nurlan',    password:'nurlan123',  displayName:'Нурлан Р.',     role:'doctor',    staffId:5,    color:'#22c55e', initials:'НР'},
+  {id:'gauhar',    login:'gauhar',    password:'gauhar123',  displayName:'Гаухар Т.',     role:'nurse',     staffId:6,    color:'#ec4899', initials:'ГТ'},
+];
+
+function loadUsers() {
+  try { const s = localStorage.getItem('amanat_users'); if(s) return JSON.parse(s); } catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_USERS));
+}
+function saveUsers(u) { localStorage.setItem('amanat_users', JSON.stringify(u)); }
+
+let currentUser = null;
+let currentRole = 'admin';
+let currentDate = new Date();
+let pickerDate  = new Date();
+let calPageDate = new Date();
+let activeStaffId = null; 
+
+// permissions
+const PERMS = {
+  admin:     {finance:true,  phones:true,  edit:true,  patients:true},
+  reception: {finance:false, phones:true,  edit:true,  patients:true},
+  doctor:    {finance:false, phones:false, edit:false, patients:true},
+  nurse:     {finance:false, phones:false, edit:false, patients:false},
+  manager:   {finance:true,  phones:true,  edit:true,  patients:true},
+};
+
+function perm(key) { return (PERMS[currentRole]||{})[key] || false; }
+
+function doLogin() {
+  const login = document.getElementById('l-user').value.trim();
+  const pass  = document.getElementById('l-pass').value;
+  const user  = loadUsers().find(u => u.login===login && u.password===pass);
+  if (!user) {
+    const e = document.getElementById('login-error');
+    e.style.display='block';
+    document.getElementById('l-pass').value='';
+    setTimeout(()=>e.style.display='none', 2800);
+    return;
+  }
+  loginAs(user);
+}
+
+function quickLogin(id) {
+  const user = loadUsers().find(u => u.id===id);
+  if (user) loginAs(user);
+}
+
+function loginAs(user) {
+  currentUser = user;
+  currentRole = user.role;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+
+  const av = document.getElementById('topbar-avatar');
+  av.textContent = user.initials;
+  av.style.background = user.color;
+
+  applyNavVisibility();
+
+  activeStaffId = user.staffId || null;
+  renderAll();
+  toast(`Добро пожаловать, ${user.displayName}! 👋`, 'ok');
+}
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('l-user').value='';
+  document.getElementById('l-pass').value='';
+}
+
+function applyNavVisibility() {
+  const isAdmin = currentRole==='admin';
+  const canPatients = perm('patients');
+  document.getElementById('nav-patients').style.display = canPatients ? 'flex' : 'none';
+  document.getElementById('nav-overview').style.display = (isAdmin||currentRole==='manager'||currentRole==='reception') ? 'flex' : 'none';
+}
+
+// ── ROUTING ──
+const PAGE_TITLES = {schedule:'Расписание', patients:'Пациенты', overview:'Обзор', calendar:'Календарь', profile:'Профиль'};
+
+function setPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const pg = document.getElementById('page-'+p);
+  const nv = document.getElementById('nav-'+p);
+  if (pg) pg.classList.add('active');
+  if (nv) nv.classList.add('active');
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[p] || p;
+
+  document.getElementById('fab').style.display = (p==='schedule' && perm('edit')) ? 'flex' : 'none';
+  document.getElementById('app-main').scrollTo(0,0);
+
+  if (p==='schedule') renderSchedule();
+  if (p==='patients') renderPatients();
+  if (p==='overview') renderOverview();
+  if (p==='calendar') renderCalendar();
+  if (p==='profile')  renderProfile();
+}
+
+// ── DATE HELPERS ──
+const RU_MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const RU_MONTHS_G = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const RU_DAYS = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+const RU_DAYS_LONG = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+
+function dateStr(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function today() { const t=new Date(); t.setHours(0,0,0,0); return t; }
+function isToday(d) { return dateStr(d)===dateStr(today()); }
+
+function updateDateDisplay() {
+  const d = currentDate;
+  const label = isToday(d) ? 'Сегодня' : (dateStr(d)===dateStr(new Date(today().getTime()+86400000)) ? 'Завтра' : d.getDate()+' '+RU_MONTHS_G[d.getMonth()]);
+  document.getElementById('dn-label').textContent = label+', '+d.getDate()+' '+RU_MONTHS_G[d.getMonth()];
+  document.getElementById('dn-sub').textContent = RU_DAYS_LONG[d.getDay()];
+  const shortLabel = d.getDate()+' '+RU_MONTHS_G[d.getMonth()].slice(0,3);
+  document.getElementById('topbar-date-text').textContent = isToday(d)?'Сегодня':shortLabel;
+}
+
+function changeDay(d) {
+  currentDate = new Date(currentDate.getTime() + d*86400000);
+  renderSchedule();
+}
+function goToday() { currentDate = new Date(); renderSchedule(); }
+
+// ── STATUS COLORS ──
+function statusColor(s) {
+  const m = {
+    'Подтверждён':  {bg:'#d1fae5',color:'#065f46'},
+    'Ожидает':      {bg:'#fef3c7',color:'#92400e'},
+    'Срочно':       {bg:'#fee2e2',color:'#991b1b'},
+    'Выполнено':    {bg:'#f1f5f9',color:'#475569'},
+    'Направлен врачом': {bg:'#ede9fe',color:'#5b21b6'},
+    'Отменён':      {bg:'#fee2e2',color:'#991b1b'},
+  };
+  return m[s] || {bg:'#f1f5f9',color:'#64748b'};
+}
+
+// ── SCHEDULE ──
+function getVisibleStaff() {
+  if (currentUser && currentUser.staffId && (currentRole==='doctor'||currentRole==='nurse')) {
+    return STAFF.filter(s => s.id===currentUser.staffId);
+  }
+  return STAFF;
+}
+
+function renderSchedule() {
+  updateDateDisplay();
+  const ds = dateStr(currentDate);
+  const vis = getVisibleStaff();
+
+  const tabs = document.getElementById('staff-tabs');
+  const all = vis.length > 1;
+  let tabsHtml = '';
+  if (all) {
+    const allCnt = APPOINTMENTS.filter(a => a.date===ds && vis.some(s=>s.id===a.staffId)).length;
+    tabsHtml += `<div class="staff-tab ${activeStaffId===null?'active':''}" onclick="filterStaff(null)">
+      <div class="staff-tab-av" style="background:linear-gradient(135deg,var(--accent),var(--teal));${activeStaffId===null?'border-color:var(--accent)':''}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        ${allCnt>0?`<div class="staff-tab-cnt">${allCnt}</div>`:''}
+      </div>
+      <div class="staff-tab-name">Все</div>
+    </div>`;
+  }
+  vis.forEach(s => {
+    const cnt = APPOINTMENTS.filter(a => a.date===ds && a.staffId===s.id).length;
+    const active = activeStaffId===s.id || (!all && vis.length===1);
+    tabsHtml += `<div class="staff-tab ${active?'active':''}" onclick="filterStaff(${s.id})">
+      <div class="staff-tab-av" style="background:${s.color}">
+        ${cnt>0?`<div class="staff-tab-cnt">${cnt}</div>`:''}
+      </div>
+      <div class="staff-tab-name">${s.name}</div>
+    </div>`;
+  });
+  tabs.innerHTML = tabsHtml;
+
+  const staffToShow = activeStaffId
+    ? vis.filter(s => s.id===activeStaffId)
+    : (vis.length===1 ? vis : vis);
+
+  const timeline = document.getElementById('timeline');
+  let appts = APPOINTMENTS.filter(a => a.date===ds && staffToShow.some(s=>s.id===a.staffId));
+  appts.sort((a,b) => a.timeStart.localeCompare(b.timeStart));
+
+  if (!appts.length) {
+    timeline.innerHTML = `<div class="empty-day">
+      <div class="empty-day-icon">📅</div>
+      <div class="empty-day-title">Записей нет</div>
+      <div class="empty-day-sub">На этот день нет записей</div>
+    </div>`;
+    return;
+  }
+
+  const canSeePhone = perm('phones');
+
+  timeline.innerHTML = appts.map(a => {
+    const s = STAFF.find(x=>x.id===a.staffId) || {color:'#8898aa', initials:'?', name:'—'};
+    const sc = statusColor(a.status);
+    const waBtn = (canSeePhone && a.phone)
+      ? `<div class="appt-wa" onclick="event.stopPropagation();openWA('${a.phone}')" title="${a.phone}">
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="16" height="16"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zm5.52 14.13c-.23.65-1.36 1.25-1.86 1.33-.47.08-1.07.11-1.73-.11-.4-.13-.91-.31-1.56-.61-2.74-1.18-4.53-3.94-4.67-4.13-.14-.18-1.12-1.48-1.12-2.83 0-1.35.7-2.01.95-2.28.25-.28.55-.34.73-.34h.52c.17 0 .39-.07.62.47.23.55.79 1.9.86 2.04.07.14.11.3.02.48-.09.18-.14.3-.27.46-.14.16-.29.35-.41.48-.14.14-.28.28-.12.56.16.27.71 1.17 1.52 1.89 1.04.93 1.92 1.22 2.19 1.35.27.14.43.11.59-.07.16-.18.68-.8.86-1.07.18-.27.36-.23.62-.14.25.09 1.59.75 1.87.89.27.14.45.2.52.32.06.11.06.65-.16 1.3z"/></svg>
+         </div>` : '';
+    const staffBadge = (!activeStaffId && vis.length>1)
+      ? `<div style="display:flex;align-items:center;gap:4px;margin-top:4px">
+           <div style="width:16px;height:16px;border-radius:50%;background:${s.color};display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff">${s.initials}</div>
+           <span style="font-size:11px;color:var(--text3)">${s.name}</span>
+         </div>` : '';
+    return `<div class="appt-card" style="border-left-color:${s.color}" onclick="openDetail(${a.id})">
+      <div class="appt-time-col">
+        <div class="appt-time">${a.timeStart}</div>
+        <div class="appt-dur">${a.dur}м</div>
+      </div>
+      <div class="appt-body">
+        <div class="appt-patient">${a.patient}</div>
+        <div class="appt-service">${a.service}</div>
+        <div class="appt-meta">
+          <span class="appt-status" style="background:${sc.bg};color:${sc.color}">${a.status}</span>
+        </div>
+        ${staffBadge}
+      </div>
+      ${waBtn}
+    </div>`;
+  }).join('');
+}
+
+function filterStaff(id) {
+  activeStaffId = id;
+  renderSchedule();
+}
+
+function openWA(phone) {
+  const clean = phone.replace(/\D/g,'');
+  window.open('https://wa.me/'+clean,'_blank');
+}
+
+// ── DETAIL SHEET ──
+function openDetail(id) {
+  const a = APPOINTMENTS.find(x=>x.id===id);
+  if (!a) return;
+  const s = STAFF.find(x=>x.id===a.staffId)||{color:'#8898aa',initials:'?',name:'—',role:'—'};
+  const sc = statusColor(a.status);
+  const canSeePhone = perm('phones');
+  const canEdit = perm('edit');
+
+  const statusOptions = ['Подтверждён','Ожидает','Срочно','Выполнено','Отменён','Направлен врачом']
+    .map(st=>`<option ${a.status===st?'selected':''}>${st}</option>`).join('');
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-header">
+      <div class="detail-av" style="background:${s.color}">${s.initials}</div>
+      <div style="min-width:0">
+        <div style="font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.patient}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">${s.name} · ${s.role}</div>
+      </div>
+    </div>
+    <div class="sheet-body" style="padding-bottom:0">
+      <div class="detail-row"><span class="detail-key">🕐 Время</span><span class="detail-val">${a.timeStart} · ${a.dur} мин</span></div>
+      <div class="detail-row"><span class="detail-key">📋 Услуга</span><span class="detail-val" style="font-size:12px">${a.service}</span></div>
+      <div class="detail-row"><span class="detail-key">📅 Дата</span><span class="detail-val">${a.date}</span></div>
+      <div class="detail-row">
+        <span class="detail-key">⚡ Статус</span>
+        <span>
+          ${canEdit
+            ? `<select class="sheet-select" style="padding:5px 28px 5px 10px;font-size:12px;width:auto" onchange="updateStatus(${a.id},this.value)">${statusOptions}</select>`
+            : `<span class="status-badge" style="background:${sc.bg};color:${sc.color}">${a.status}</span>`
+          }
+        </span>
+      </div>
+      ${canSeePhone && a.phone ? `
+        <div class="detail-row">
+          <span class="detail-key">📱 Телефон</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="detail-val">${a.phone}</span>
+            <div style="width:30px;height:30px;background:#25d366;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" onclick="openWA('${a.phone}')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="15" height="15"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zm5.52 14.13c-.23.65-1.36 1.25-1.86 1.33-.47.08-1.07.11-1.73-.11-.4-.13-.91-.31-1.56-.61-2.74-1.18-4.53-3.94-4.67-4.13-.14-.18-1.12-1.48-1.12-2.83 0-1.35.7-2.01.95-2.28.25-.28.55-.34.73-.34h.52c.17 0 .39-.07.62.47.23.55.79 1.9.86 2.04.07.14.11.3.02.48-.09.18-.14.3-.27.46-.14.16-.29.35-.41.48-.14.14-.28.28-.12.56.16.27.71 1.17 1.52 1.89 1.04.93 1.92 1.22 2.19 1.35.27.14.43.11.59-.07.16-.18.68-.8.86-1.07.18-.27.36-.23.62-.14.25.09 1.59.75 1.87.89.27.14.45.2.52.32.06.11.06.65-.16 1.3z"/></svg>
+            </div>
+          </div>
+        </div>` : ''}
+    </div>
+    <div style="padding:12px 20px 4px;display:flex;gap:8px">
+      ${canEdit ? `<button class="sheet-btn" style="flex:1;padding:12px" onclick="closeSheet('detail-overlay');toast('Открыто редактирование','ok')">✏️ Изменить</button>` : ''}
+      <button class="sheet-btn sheet-btn-secondary" style="flex:1;padding:12px;width:auto;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer" onclick="closeSheet('detail-overlay')">Закрыть</button>
+    </div>`;
+
+  openSheet('detail-overlay');
+}
+
+function updateStatus(id, val) {
+  const a = APPOINTMENTS.find(x=>x.id===id);
+  if (a) { a.status=val; toast('Статус обновлён ✓','ok'); }
+  renderSchedule();
+}
+
+// ── ADD APPOINTMENT ──
+function openAddSheet() {
+  const sel = document.getElementById('a-doctor');
+  const vis = getVisibleStaff();
+  sel.innerHTML = vis.map(s=>`<option value="${s.id}">${s.name} — ${s.role}</option>`).join('');
+  if (currentUser && currentUser.staffId) {
+    sel.value = currentUser.staffId;
+  }
+  openSheet('add-overlay');
+}
+
+function submitAdd() {
+  const patient = document.getElementById('a-patient').value.trim();
+  const phone   = document.getElementById('a-phone').value.trim();
+  const staffId = parseInt(document.getElementById('a-doctor').value);
+  const time    = document.getElementById('a-time').value;
+  const dur     = parseInt(document.getElementById('a-dur').value)||60;
+  const service = document.getElementById('a-service').value;
+  const status  = document.getElementById('a-status').value;
+
+  if (!patient) { toast('Введите ФИО пациента','err'); return; }
+  APPOINTMENTS.push({id:nextId++, staffId, patient, phone, service, date:dateStr(currentDate), timeStart:time, dur, status});
+  closeSheet('add-overlay');
+  document.getElementById('a-patient').value='';
+  document.getElementById('a-phone').value='';
+  renderSchedule();
+  toast('Запись добавлена ✓','ok');
+}
+
+// ── PATIENTS ──
+function renderPatients() {
+  const q = (document.getElementById('patient-search').value||'').toLowerCase();
+  const all = [...new Map(APPOINTMENTS.map(a=>[a.patient, a])).values()];
+  const filtered = q ? all.filter(a=>a.patient.toLowerCase().includes(q)||(a.phone||'').includes(q)) : all;
+  const el = document.getElementById('patients-list');
+  if (!filtered.length) {
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">Ничего не найдено</div>';
+    return;
+  }
+  const canPhone = perm('phones');
+  el.innerHTML = filtered.map(a => {
+    const initials = a.patient.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const cnt = APPOINTMENTS.filter(x=>x.patient===a.patient).length;
+    return `<div class="patient-card" onclick="openPatientSheet('${a.patient.replace(/'/g,"\\'")}')">
+      <div class="patient-av" style="background:var(--accent)">${initials}</div>
+      <div style="flex:1;min-width:0">
+        <div class="patient-name">${a.patient}</div>
+        <div class="patient-meta">${canPhone&&a.phone?a.phone+' · ':''}${cnt} визит${cnt===1?'':'а'}</div>
+      </div>
+      <div class="patient-arrow">›</div>
+    </div>`;
+  }).join('');
+}
+
+function openPatientSheet(name) {
+  const appts = APPOINTMENTS.filter(a=>a.patient===name).sort((a,b)=>b.date.localeCompare(a.date));
+  const first = appts[0]||{};
+  const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const canPhone = perm('phones');
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-header">
+      <div class="detail-av" style="background:var(--accent);font-size:18px">${initials}</div>
+      <div>
+        <div style="font-size:16px;font-weight:800">${name}</div>
+        ${canPhone&&first.phone?`<div style="font-size:13px;color:var(--text3);margin-top:3px;display:flex;align-items:center;gap:6px">${first.phone}
+          <div style="width:24px;height:24px;background:#25d366;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="openWA('${first.phone}')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="12" height="12"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zm5.52 14.13c-.23.65-1.36 1.25-1.86 1.33-.47.08-1.07.11-1.73-.11-.4-.13-.91-.31-1.56-.61-2.74-1.18-4.53-3.94-4.67-4.13-.14-.18-1.12-1.48-1.12-2.83 0-1.35.7-2.01.95-2.28.25-.28.55-.34.73-.34h.52c.17 0 .39-.07.62.47.23.55.79 1.9.86 2.04.07.14.11.3.02.48-.09.18-.14.3-.27.46-.14.16-.29.35-.41.48-.14.14-.28.28-.12.56.16.27.71 1.17 1.52 1.89 1.04.93 1.92 1.22 2.19 1.35.27.14.43.11.59-.07.16-.18.68-.8.86-1.07.18-.27.36-.23.62-.14.25.09 1.59.75 1.87.89.27.14.45.2.52.32.06.11.06.65-.16 1.3z"/></svg>
+          </div></div>` : ''}
+      </div>
+    </div>
+    <div class="sheet-body">
+      <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">История визитов (${appts.length})</div>
+      ${appts.map(a=>{
+        const s = STAFF.find(x=>x.id===a.staffId)||{name:'—',color:'#8898aa'};
+        const sc = statusColor(a.status);
+        return `<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border2)">
+          <div style="width:4px;background:${s.color};border-radius:2px;flex-shrink:0;align-self:stretch"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600">${a.service}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">${a.date} · ${a.timeStart} · ${s.name}</div>
+          </div>
+          <span class="status-badge" style="background:${sc.bg};color:${sc.color};align-self:flex-start">${a.status}</span>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="padding:12px 20px 4px">
+      <button class="sheet-btn sheet-btn-secondary" style="width:100%;padding:12px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer" onclick="closeSheet('detail-overlay')">Закрыть</button>
+    </div>`;
+  openSheet('detail-overlay');
+}
+
+// ── OVERVIEW ──
+function renderOverview() {
+  const ds = dateStr(new Date());
+  const todayAppts = APPOINTMENTS.filter(a=>a.date===ds);
+  const done = todayAppts.filter(a=>a.status==='Выполнено').length;
+  const urgent = todayAppts.filter(a=>a.status==='Срочно').length;
+  const patients = new Set(APPOINTMENTS.map(a=>a.patient)).size;
+  const canFinance = perm('finance');
+
+  document.getElementById('overview-grid').innerHTML = `
+    <div class="ov-card">
+      <div class="ov-card-icon" style="background:#e0f2fe">📅</div>
+      <div class="ov-card-val">${todayAppts.length}</div>
+      <div class="ov-card-label">Записей сегодня</div>
+      <div class="ov-card-sub">↑ ${done} выполнено</div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-card-icon" style="background:#fce7f3">⚡</div>
+      <div class="ov-card-val" style="color:${urgent>0?'var(--red)':'var(--text)'}">${urgent}</div>
+      <div class="ov-card-label">Срочных</div>
+      <div class="ov-card-sub" style="color:var(--text3)">на сегодня</div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-card-icon" style="background:#ede9fe">👥</div>
+      <div class="ov-card-val">${patients}</div>
+      <div class="ov-card-label">Пациентов</div>
+      <div class="ov-card-sub">в базе</div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-card-icon" style="background:#d1fae5">🩺</div>
+      <div class="ov-card-val">${STAFF.length}</div>
+      <div class="ov-card-label">Врачей</div>
+      <div class="ov-card-sub">активных</div>
+    </div>
+    ${canFinance ? `
+    <div class="ov-card ov-card-wide">
+      <div class="ov-card-icon" style="background:#fef3c7">💰</div>
+      <div class="ov-card-val">₸ 470 000</div>
+      <div class="ov-card-label">Баланс кассы</div>
+      <div class="ov-card-sub">↑ +12% к прошлой неделе</div>
+    </div>` : ''}
+    <div class="ov-card ov-card-wide">
+      <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px">Загрузка сотрудников сегодня</div>
+      ${STAFF.map(s=>{
+        const cnt = todayAppts.filter(a=>a.staffId===s.id).length;
+        const pct = Math.min(100, cnt*16);
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <div style="width:26px;height:26px;border-radius:50%;background:${s.color};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0">${s.initials}</div>
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;margin-bottom:3px"><span>${s.name}</span><span>${cnt} зап.</span></div>
+            <div style="background:var(--border);border-radius:4px;height:5px"><div style="background:${s.color};height:100%;border-radius:4px;width:${pct}%;transition:width .3s"></div></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ── CALENDAR PAGE ──
+function renderCalendar() {
+  renderCalGrid();
+  renderCalDayList();
+}
+
+function renderCalGrid() {
+  const y = calPageDate.getFullYear(), m = calPageDate.getMonth();
+  document.getElementById('cal-month-label').textContent = RU_MONTHS[m]+' '+y;
+  const first = new Date(y, m, 1);
+  let dow = first.getDay(); 
+  dow = dow===0 ? 6 : dow-1; 
+  const days = new Date(y, m+1, 0).getDate();
+  const ds = dateStr(currentDate);
+  const todayStr = dateStr(today());
+  const datesWithAppts = new Set(APPOINTMENTS.map(a=>a.date));
+
+  let html='';
+  for (let i=0;i<dow;i++) html+='<div></div>';
+  for (let d=1;d<=days;d++) {
+    const dd = String(d).padStart(2,'0');
+    const mm = String(m+1).padStart(2,'0');
+    const dstr = `${y}-${mm}-${dd}`;
+    const isTd = dstr===todayStr;
+    const isSel = dstr===ds;
+    const hasDot = datesWithAppts.has(dstr);
+    html+=`<div class="cal-day ${isTd?'today':''} ${isSel&&!isTd?'selected':''}" onclick="selectCalDate('${dstr}')">
+      ${d}
+      ${hasDot&&!isTd?`<div class="cal-dot"></div>`:''}
+    </div>`;
+  }
+  document.getElementById('cal-grid').innerHTML = html;
+  renderCalDayList();
+}
+
+function selectCalDate(dstr) {
+  const [y,m,d] = dstr.split('-').map(Number);
+  currentDate = new Date(y, m-1, d);
+  renderCalGrid();
+  renderCalDayList();
+}
+
+function renderCalDayList() {
+  const ds = dateStr(currentDate);
+  const label = isToday(currentDate)?'Сегодня':currentDate.getDate()+' '+RU_MONTHS_G[currentDate.getMonth()];
+  document.getElementById('cal-day-label').textContent = `Записи — ${label}`;
+  const appts = APPOINTMENTS.filter(a=>a.date===ds).sort((a,b)=>a.timeStart.localeCompare(b.timeStart));
+  const el = document.getElementById('cal-day-list');
+  if (!appts.length) { el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Нет записей</div>'; return; }
+  el.innerHTML = appts.map(a=>{
+    const s = STAFF.find(x=>x.id===a.staffId)||{color:'#8898aa',name:'—'};
+    const sc = statusColor(a.status);
+    return `<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border2);cursor:pointer" onclick="openDetail(${a.id})">
+      <div style="width:3px;background:${s.color};border-radius:2px;flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.patient}</div>
+        <div style="font-size:11px;color:var(--text3)">${a.timeStart} · ${a.service} · ${s.name}</div>
+      </div>
+      <span class="status-badge" style="background:${sc.bg};color:${sc.color};align-self:flex-start">${a.status}</span>
+    </div>`;
+  }).join('');
+}
+
+function calPrevMonth() { calPageDate = new Date(calPageDate.getFullYear(), calPageDate.getMonth()-1,1); renderCalGrid(); }
+function calNextMonth() { calPageDate = new Date(calPageDate.getFullYear(), calPageDate.getMonth()+1,1); renderCalGrid(); }
+
+// ── CALENDAR PICKER SHEET ──
+function openCalSheet() {
+  pickerDate = new Date(currentDate);
+  renderPickerGrid();
+  openSheet('cal-overlay');
+}
+function renderPickerGrid() {
+  const y = pickerDate.getFullYear(), m = pickerDate.getMonth();
+  document.getElementById('picker-month-label').textContent = RU_MONTHS[m]+' '+y;
+  const first = new Date(y, m, 1);
+  let dow = first.getDay(); dow = dow===0?6:dow-1;
+  const days = new Date(y, m+1, 0).getDate();
+  const ds = dateStr(currentDate);
+  const todayStr = dateStr(today());
+  let html='';
+  for(let i=0;i<dow;i++) html+='<div></div>';
+  for(let d=1;d<=days;d++){
+    const dstr=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isTd=dstr===todayStr, isSel=dstr===ds;
+    html+=`<div class="cal-day ${isTd?'today':''} ${isSel&&!isTd?'selected':''}" onclick="pickDate('${dstr}')">${d}</div>`;
+  }
+  document.getElementById('picker-grid').innerHTML = html;
+}
+function pickDate(dstr) {
+  const [y,m,d] = dstr.split('-').map(Number);
+  currentDate = new Date(y,m-1,d);
+  closeSheet('cal-overlay');
+  renderSchedule();
+}
+function calPickerPrev(){ pickerDate=new Date(pickerDate.getFullYear(),pickerDate.getMonth()-1,1);renderPickerGrid(); }
+function calPickerNext(){ pickerDate=new Date(pickerDate.getFullYear(),pickerDate.getMonth()+1,1);renderPickerGrid(); }
+
+// ── PROFILE ──
+function renderProfile() {
+  if (!currentUser) return;
+  const u = currentUser;
+  const av = document.getElementById('prof-av');
+  av.textContent = u.initials;
+  av.style.background = u.color;
+  document.getElementById('prof-name').textContent = u.displayName;
+  const roleLabel = {admin:'Администратор',reception:'Рецепшен',doctor:'Врач',nurse:'Медсестра',manager:'Менеджер'}[u.role]||u.role;
+  document.getElementById('prof-role').textContent = `${roleLabel} · ${u.login}`;
+
+  const isAdmin = u.role==='admin';
+  const body = document.getElementById('profile-body');
+  body.innerHTML = `
+    <div class="settings-section">
+      <div class="settings-section-title">Аккаунт</div>
+      <div onclick="openSheet('cp-overlay')" class="settings-row">
+        <div class="settings-row-icon" style="background:#e0f2fe">🔐</div>
+        <div class="settings-row-label">Изменить пароль</div>
+        <div class="settings-row-arrow">›</div>
+      </div>
+    </div>
+    ${isAdmin ? `
+    <div class="settings-section">
+      <div class="settings-section-title">Администрирование</div>
+      <div onclick="openUsersSheet()" class="settings-row">
+        <div class="settings-row-icon" style="background:#ede9fe">👥</div>
+        <div class="settings-row-label">Пользователи</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="settings-row-val" id="users-count">—</div>
+          <div class="settings-row-arrow">›</div>
+        </div>
+      </div>
+    </div>` : ''}
+    <div class="settings-section">
+      <div class="settings-section-title">Мои данные</div>
+      <div class="settings-row" style="cursor:default">
+        <div class="settings-row-icon" style="background:#f1f5f9">🏥</div>
+        <div class="settings-row-label">Клиника</div>
+        <div class="settings-row-val">AMANAT MED</div>
+      </div>
+      ${u.staffId ? `<div class="settings-row" style="cursor:default">
+        <div class="settings-row-icon" style="background:#d1fae5">🩺</div>
+        <div class="settings-row-label">Должность</div>
+        <div class="settings-row-val">${STAFF.find(s=>s.id===u.staffId)?.role||'—'}</div>
+      </div>` : ''}
+    </div>
+    <div class="settings-section">
+      <div onclick="doLogout()" class="settings-row" style="background:#fff5f5">
+        <div class="settings-row-icon" style="background:#fee2e2">🚪</div>
+        <div class="settings-row-label" style="color:var(--red);font-weight:600">Выйти из системы</div>
+        <div class="settings-row-arrow" style="color:var(--red)">›</div>
+      </div>
+    </div>`;
+
+  if (isAdmin) {
+    const cnt = loadUsers().length;
+    const el = document.getElementById('users-count');
+    if (el) el.textContent = cnt+' польз.';
+  }
+}
+
+// ── CHANGE PASSWORD ──
+function changePassword() {
+  const old = document.getElementById('cp-old').value;
+  const nw  = document.getElementById('cp-new').value;
+  const cf  = document.getElementById('cp-conf').value;
+  if (!old||!nw||!cf) { toast('Заполните все поля','err'); return; }
+  if (old!==currentUser.password) { toast('Неверный текущий пароль','err'); return; }
+  if (nw.length<4) { toast('Минимум 4 символа','err'); return; }
+  if (nw!==cf) { toast('Пароли не совпадают','err'); return; }
+  const users = loadUsers();
+  const idx = users.findIndex(u=>u.id===currentUser.id);
+  if (idx>=0) { users[idx].password=nw; saveUsers(users); currentUser.password=nw; }
+  closeSheet('cp-overlay');
+  document.getElementById('cp-old').value='';
+  document.getElementById('cp-new').value='';
+  document.getElementById('cp-conf').value='';
+  toast('Пароль изменён ✓','ok');
+}
+
+// ── USERS (ADMIN) ──
+function openUsersSheet() {
+  const users = loadUsers();
+  const roleLabel = r => ({admin:'Администратор',reception:'Рецепшен',doctor:'Врач',nurse:'Медсестра',manager:'Менеджер'}[r]||r);
+  const roleBg = r => ({admin:'#fef3c7',reception:'#e0f2fe',doctor:'#ede9fe',nurse:'#fce7f3',manager:'#f1f5f9'}[r]||'#f1f5f9');
+  const roleClr = r => ({admin:'#92400e',reception:'#0c4a6e',doctor:'#5b21b6',nurse:'#9d174d',manager:'#475569'}[r]||'#475569');
+
+  document.getElementById('user-sheet-title').textContent = '👥 Пользователи';
+  document.getElementById('user-sheet-body').innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <button onclick="openAddUserForm()" style="padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">+ Добавить</button>
+    </div>
+    ${users.map(u=>`
+      <div class="user-row" onclick="openEditUserForm('${u.id}')">
+        <div style="width:36px;height:36px;border-radius:50%;background:${u.color};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">${u.initials}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.displayName}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${u.login}</div>
+        </div>
+        <span class="user-role-badge" style="background:${roleBg(u.role)};color:${roleClr(u.role)}">${roleLabel(u.role)}</span>
+        <div style="color:var(--text3);margin-left:4px">›</div>
+      </div>`).join('')}`;
+  openSheet('user-overlay');
+}
+
+function openAddUserForm() { renderUserForm(null); }
+function openEditUserForm(id) { renderUserForm(id); }
+
+function renderUserForm(editId) {
+  const users = loadUsers();
+  const u = editId ? users.find(x=>x.id===editId) : null;
+  const isEdit = !!u;
+  const staffOptions = STAFF.map(s=>`<option value="${s.id}" ${u&&u.staffId===s.id?'selected':''}>${s.name}</option>`).join('');
+  const roleOptions = ['admin','reception','doctor','nurse','manager'].map(r=>{
+    const lbl = {admin:'Администратор',reception:'Рецепшен',doctor:'Врач',nurse:'Медсестра',manager:'Менеджер'}[r];
+    return `<option value="${r}" ${u&&u.role===r?'selected':''}>${lbl}</option>`;
+  }).join('');
+
+  document.getElementById('user-sheet-title').textContent = isEdit ? '✏️ Редактировать' : '➕ Новый пользователь';
+  document.getElementById('user-sheet-body').innerHTML = `
+    <div class="sheet-field"><label class="sheet-label">Имя</label><input class="sheet-input" id="uf-name" value="${u?u.displayName:''}" placeholder="Иван Иванов"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="sheet-field"><label class="sheet-label">Логин</label><input class="sheet-input" id="uf-login" value="${u?u.login:''}" placeholder="ivan" autocapitalize="none"></div>
+      <div class="sheet-field"><label class="sheet-label">Пароль</label><input class="sheet-input" id="uf-pass" value="${u?u.password:''}" placeholder="••••••"></div>
+    </div>
+    <div class="sheet-field"><label class="sheet-label">Роль</label><select class="sheet-select" id="uf-role">${roleOptions}</select></div>
+    <div class="sheet-field"><label class="sheet-label">Сотрудник (врач/медсестра)</label>
+      <select class="sheet-select" id="uf-staff"><option value="">— Не привязан —</option>${staffOptions}</select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="sheet-field"><label class="sheet-label">Инициалы</label><input class="sheet-input" id="uf-init" value="${u?u.initials:''}" placeholder="ИИ" maxlength="2"></div>
+      <div class="sheet-field"><label class="sheet-label">Цвет</label>
+        <select class="sheet-select" id="uf-color">
+          ${['#00897b','#14b8a6','#4f9cf9','#2196f3','#a78bfa','#f97316','#22c55e','#ec4899','#f59e0b'].map(c=>`<option value="${c}" ${u&&u.color===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    ${isEdit && editId!=='admin' ? `<button onclick="deleteUserConfirm('${editId}')" class="sheet-btn sheet-btn-danger" style="margin-bottom:8px">🗑 Удалить пользователя</button>` : ''}
+    <button class="sheet-btn" onclick="saveUserForm('${editId||''}')">Сохранить</button>
+    <button onclick="openUsersSheet()" style="width:100%;padding:12px;margin-top:8px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer">← Назад</button>`;
+}
+
+function saveUserForm(editId) {
+  const users = loadUsers();
+  const name    = document.getElementById('uf-name').value.trim();
+  const login   = document.getElementById('uf-login').value.trim();
+  const pass    = document.getElementById('uf-pass').value.trim();
+  const role    = document.getElementById('uf-role').value;
+  const staffId = parseInt(document.getElementById('uf-staff').value)||null;
+  const initials= document.getElementById('uf-init').value.trim().toUpperCase()||name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const color   = document.getElementById('uf-color').value||'#00897b';
+
+  if (!name||!login||!pass) { toast('Заполните все поля','err'); return; }
+  if (pass.length<4) { toast('Пароль мин. 4 символа','err'); return; }
+  const dup = users.find(u=>u.login===login&&u.id!==(editId||null));
+  if (dup) { toast('Логин уже занят','err'); return; }
+
+  if (editId) {
+    const idx = users.findIndex(u=>u.id===editId);
+    if (idx>=0) users[idx]={...users[idx], displayName:name, login, password:pass, role, staffId, initials, color};
+  } else {
+    users.push({id:login+'_'+Date.now(), login, password:pass, displayName:name, role, staffId, initials, color});
+  }
+  saveUsers(users);
+  openUsersSheet();
+  toast(editId?'Сохранено ✓':'Пользователь добавлен ✓','ok');
+}
+
+function deleteUserConfirm(id) {
+  if (id===currentUser?.id) { toast('Нельзя удалить себя','err'); return; }
+  if (!confirm('Удалить пользователя?')) return;
+  saveUsers(loadUsers().filter(u=>u.id!==id));
+  openUsersSheet();
+  toast('Удалён','ok');
+}
+
+// ── SHEETS HELPER ──
+function openSheet(id) {
+  const el = document.getElementById(id);
+  el.style.display='flex';
+  requestAnimationFrame(()=>{ requestAnimationFrame(()=>el.classList.add('open')); });
+}
+function closeSheet(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('open');
+  setTimeout(()=>{ if(!el.classList.contains('open')) el.style.display='none'; }, 250);
+}
+
+// ── TOAST ──
+function toast(msg, type='') {
+  const w = document.getElementById('toast-wrap');
+  const t = document.createElement('div');
+  t.className = 'toast '+(type||'');
+  t.textContent = msg;
+  w.appendChild(t);
+  setTimeout(()=>t.remove(), 2700);
+}
+
+// ── RENDER ALL ──
+function renderAll() {
+  calPageDate = new Date(currentDate);
+  setPage('schedule');
+}
+
+// ── SWIPE TO CHANGE DAY ──
+let touchStartX = 0;
+document.getElementById('app-main').addEventListener('touchstart', e=>{
+  touchStartX = e.touches[0].clientX;
+}, {passive:true});
+document.getElementById('app-main').addEventListener('touchend', e=>{
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const activePage = document.querySelector('.page.active');
+  if (activePage && activePage.id==='page-schedule' && Math.abs(dx)>60) {
+    changeDay(dx < 0 ? 1 : -1);
+  }
+}, {passive:true});
+
+// ══ RUN AUTO AUTH ON LOAD ══
+window.onload = function() {
+  const isAuth = checkTelegramAuth();
+  if (!isAuth) {
+    // Если авто-вход по Telegram-Username не удался, показываем дефолтный логин экран
+    document.getElementById('login-screen').style.display = 'flex';
+  }
+};
+
+</script>
+</body>
+</html>
